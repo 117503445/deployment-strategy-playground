@@ -4,9 +4,11 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
+
+	"os"
 
 	"github.com/gin-gonic/gin"
-	"os"
 )
 
 // https://gin-gonic.com/docs/examples/graceful-restart-or-stop/
@@ -23,6 +25,7 @@ func NewServer(version string) *Server {
 func (s *Server) Run() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
+		time.Sleep(500 * time.Millisecond)
 		c.JSON(http.StatusOK, gin.H{
 			"msg":      "Hello World",
 			"version":  s.version,

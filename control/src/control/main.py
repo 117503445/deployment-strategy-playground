@@ -120,7 +120,7 @@ async def case_health():
     await u1.start_send_get_req(tps=50)
     await asyncio.sleep(10)
     deploy_app("2")
-    await asyncio.sleep(20)
+    await asyncio.sleep(40)
     results = await u1.stop_and_get_results()
     logger.info(f'results = {format_results(results)}')
     delete_app("2")

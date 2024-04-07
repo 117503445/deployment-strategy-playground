@@ -29,6 +29,8 @@ services:
     # cp ./data/output/kubeconfig.yaml ~/.kube/config
     volumes:
     - ./k3s/data/k3s-server1:/var/lib/rancher/k3s
+
+    - ./k3s/data/logs:/logs/access.log
     # This is just so that we get the kubeconfig file out
     - ./k3s/data/output:/output
     - ./k3s/config/traefik-config.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml

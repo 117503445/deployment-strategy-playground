@@ -1,3 +1,6 @@
+# https://github.com/traefik/traefik-helm-chart
+# https://github.com/traefik/traefik-helm-chart/blob/master/traefik/VALUES.md
+
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
 metadata:
@@ -11,3 +14,4 @@ spec:
     additionalArguments:
       - --log.level=DEBUG
       - --api.insecure=true
+      - --accesslog=true

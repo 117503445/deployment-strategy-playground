@@ -58,19 +58,39 @@ class ReqUser:
                     resp_d = json.loads(text)
                     return ReqResult(True, resp_d)
                 except Exception as e:
-                    return ReqResult(False, {"msg": "json error", "ex": str(e), "text": text})
+                    return ReqResult(
+                        False,
+                        {
+                            "msg": "json error",
+                            "ex": str(e),
+                            "text": text,
+                            "status": resp.status,
+                        },
+                    )
         except Exception as e:
             return ReqResult(False, {"msg": "req error", "ex": str(e)})
+
+    async def _send_get_req(self):
+        result = await self.send_get_req()
+        logger.debug(f"{self.name} result: {result}")
+
+        self.results.append(result)
 
     async def _start_send_get_req(self, tps=1):
         logger.info(f"{self.name} started, tps={tps}")
         sleep_time = 1 / tps
         while self.requesting:
-            result = await self.send_get_req()
-            logger.debug(f"{self.name} result: {result}")
+            start = asyncio.get_event_loop().time()
+            asyncio.create_task(self._send_get_req())
+            end = asyncio.get_event_loop().time()
 
-            self.results.append(result)
-            await asyncio.sleep(sleep_time)
+            if end - start < sleep_time:
+                await asyncio.sleep(sleep_time - (end - start))
+            else:
+                logger.warning(
+                    f"{self.name} is too slow, start = {start}, end = {end}, start - end = {start - end} < sleep_time = {sleep_time}"
+                )
+
         logger.info(f"{self.name} stopped")
 
     async def start_send_get_req(self, tps=1):
