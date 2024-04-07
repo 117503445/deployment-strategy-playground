@@ -9,18 +9,41 @@ services:
     stdin_open: true
     tty: true
     container_name: demo-app-dev
-  traefik:
-    image: traefik:v3.0.0-rc3
-    container_name: traefik
+  k3s:
+    image: "rancher/k3s:v1.29.3-k3s1"
+    hostname: k3s
+    command: server
+    tmpfs:
+    - /run
+    - /var/run
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    privileged: true
+    environment:
+    - K3S_TOKEN=HL7i5g88DEsMGt
+    - K3S_KUBECONFIG_OUTPUT=/output/kubeconfig.yaml
+    - K3S_KUBECONFIG_MODE=666
+    # cp ./data/output/kubeconfig.yaml ~/.kube/config
     volumes:
-      - ./traefik/config/traefik.yml:/etc/traefik/traefik.yml
-      - ./traefik/config/dynamic_configs:/dynamic_configs
+    - ./k3s/data/k3s-server1:/var/lib/rancher/k3s
+    # This is just so that we get the kubeconfig file out
+    - ./k3s/data/output:/output
+    - ./k3s/config/traefik-config.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    # ports:
+    # - 6443:6443  # Kubernetes API Server
+    # - 80:80      # Ingress controller port 80
+    # - 443:443    # Ingress controller port 443
+    # network_mode: host
+    healthcheck:
+      test: ["CMD", "kubectl", "get", "nodes"]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
 
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-
-    ports:
-      # http://localhost:8080/dashboard
-      - 8080:8080
   control-dev:
     build:
       context: ./control
@@ -33,6 +56,18 @@ services:
     tty: true
     container_name: control-dev
 
+  k3s-setup-dev:
+    build:
+      context: ./k3s-setup
+      dockerfile: Dockerfile.dev
+    volumes:
+      - './:/workspace'
+      - k3s-setup-dev-vsc:/root/.vscode-server
+    stdin_open: true
+    tty: true
+    container_name: k3s-setup-dev
+
 volumes:
   control-dev-vsc:
+  k3s-setup-dev-vsc:
   demo-app-dev-vsc:
