@@ -8,3 +8,21 @@
 #   with-sources: false
 
 -e file:.
+aiohttp==3.9.3
+    # via control
+aiosignal==1.3.1
+    # via aiohttp
+attrs==23.2.0
+    # via aiohttp
+frozenlist==1.4.1
+    # via aiohttp
+    # via aiosignal
+idna==3.6
+    # via yarl
+loguru==0.7.2
+    # via control
+multidict==6.0.5
+    # via aiohttp
+    # via yarl
+yarl==1.9.4
+    # via aiohttp

@@ -39,7 +39,8 @@ metadata:
 
 spec:
   rules:
-    - http:
+    - host: k3s
+      http:
         paths:
           - path: /
             pathType: Prefix
