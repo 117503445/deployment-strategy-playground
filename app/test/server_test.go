@@ -9,6 +9,7 @@ import (
 
 func TestServer(t *testing.T) {
 	go func() {
+		server := server.NewServer("1.0.0")
 		server.Run()
 	}()
 

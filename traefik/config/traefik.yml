@@ -2,6 +2,8 @@ providers:
   file:
     directory: /dynamic_configs
     watch: true
+  docker:
+    exposedByDefault: false
 
 api:
   dashboard: true

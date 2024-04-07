@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - './app:/workspace'
+      - demo-app-dev-vsc:/root/.vscode-server
     stdin_open: true
     tty: true
     container_name: demo-app-dev
@@ -14,6 +15,24 @@ services:
     volumes:
       - ./traefik/config/traefik.yml:/etc/traefik/traefik.yml
       - ./traefik/config/dynamic_configs:/dynamic_configs
+
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
     ports:
       # http://localhost:8080/dashboard
       - 8080:8080
+  control-dev:
+    build:
+      context: ./control
+      dockerfile: Dockerfile.dev
+    volumes:
+      - './:/workspace'
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - control-dev-vsc:/root/.vscode-server
+    stdin_open: true
+    tty: true
+    container_name: control-dev
+
+volumes:
+  control-dev-vsc:
+  demo-app-dev-vsc:
