@@ -52,6 +52,8 @@ services:
       - './:/workspace'
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - control-dev-vsc:/root/.vscode-server
+      - control-dev-rye:/root/rye
+
     stdin_open: true
     tty: true
     container_name: control-dev
@@ -67,7 +69,16 @@ services:
     tty: true
     container_name: k3s-setup-dev
 
+  kubepi:
+    image: '1panel/kubepi'
+    container_name: kubepi
+    ports:
+      - 8081:80
+    volumes:
+      - ./kubepi/data:/var/lib/kubepi
+
 volumes:
   control-dev-vsc:
+  control-dev-rye:
   k3s-setup-dev-vsc:
   demo-app-dev-vsc:

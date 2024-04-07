@@ -6,7 +6,6 @@ import (
 )
 
 func main() {
-
 	// read version from env
 	ver := os.Getenv("VER")
 
