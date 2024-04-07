@@ -1,0 +1,19 @@
+services:
+  demo-app-dev:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.dev
+    volumes:
+      - './app:/workspace'
+    stdin_open: true
+    tty: true
+    container_name: demo-app-dev
+  traefik:
+    image: traefik:v3.0.0-rc3
+    container_name: traefik
+    volumes:
+      - ./traefik/config/traefik.yml:/etc/traefik/traefik.yml
+      - ./traefik/config/dynamic_configs:/dynamic_configs
+    ports:
+      # http://localhost:8080/dashboard
+      - 8080:8080

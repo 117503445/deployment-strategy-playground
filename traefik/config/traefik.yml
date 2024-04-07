@@ -1,0 +1,17 @@
+providers:
+  file:
+    directory: /dynamic_configs
+    watch: true
+
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
+
+entryPoints:
+  # dashboard:
+  #   address: ":8000"
+  http:
+    address: ":80"

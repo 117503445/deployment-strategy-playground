@@ -1,0 +1,8 @@
+# http:
+#   routers:
+#     dashboard:
+#       # rule: Entrypoint("dashboard")
+#       entryPoints:
+#         - "dashboard"
+#       rule: PathPrefix(`/`)
+#       service: api@internal
