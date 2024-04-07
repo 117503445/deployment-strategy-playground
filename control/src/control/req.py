@@ -2,8 +2,9 @@ import asyncio
 import aiohttp
 from loguru import logger
 import atexit
+import json
 
-session = None
+session: aiohttp.ClientSession | None = None
 
 
 async def get_session():
@@ -32,6 +33,14 @@ class ReqResult:
         self.is_success = is_success
         self.result = result
 
+        self.created_at = asyncio.get_event_loop().time()
+
+    def __str__(self):
+        return f"[{self.is_success}, {self.result}]"
+
+    def __repr__(self):
+        return str(self)
+
 
 class ReqUser:
     def __init__(self, name):
@@ -42,16 +51,25 @@ class ReqUser:
 
     async def send_get_req(self) -> ReqResult:
         try:
-            async with (await get_session()).get(f"http://k3s") as resp:
-                return ReqResult(True, await resp.json())
+            sess = await get_session()
+            async with sess.get(f"http://k3s") as resp:
+                text = await resp.text()
+                try:
+                    resp_d = json.loads(text)
+                    return ReqResult(True, resp_d)
+                except Exception as e:
+                    return ReqResult(False, {"msg": "json error", "ex": str(e), "text": text})
         except Exception as e:
-            return ReqResult(False, {"req error": str(e)})
+            return ReqResult(False, {"msg": "req error", "ex": str(e)})
 
     async def _start_send_get_req(self, tps=1):
         logger.info(f"{self.name} started, tps={tps}")
         sleep_time = 1 / tps
         while self.requesting:
-            self.results.append(await self.send_get_req())
+            result = await self.send_get_req()
+            logger.debug(f"{self.name} result: {result}")
+
+            self.results.append(result)
             await asyncio.sleep(sleep_time)
         logger.info(f"{self.name} stopped")
 

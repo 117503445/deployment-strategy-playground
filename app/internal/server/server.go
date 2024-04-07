@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"os"
 )
 
 // https://gin-gonic.com/docs/examples/graceful-restart-or-stop/
@@ -23,8 +24,9 @@ func (s *Server) Run() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"msg":     "Hello World",
-			"version": s.version,
+			"msg":      "Hello World",
+			"version":  s.version,
+			"hostname": os.Getenv("HOSTNAME"),
 		})
 	})
 	s.srv = &http.Server{

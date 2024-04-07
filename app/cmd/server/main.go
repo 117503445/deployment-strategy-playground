@@ -15,6 +15,8 @@ func main() {
 	// read version from env
 	ver := os.Getenv("VER")
 
+	log.Printf("Starting server version: %s, HOSTNAME: %s\n", ver, os.Getenv("HOSTNAME"))
+
 	server := server.NewServer(ver)
 	go func() {
 		server.Run()
