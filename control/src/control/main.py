@@ -11,24 +11,7 @@ logger.add(
 )
 
 
-def build_image():
-    for ver in ["1", "2"]:
-        # docker build --build-arg VER=1 -t 117503445/demo-app:v1 /workspace/app
-        subprocess.run(
-            [
-                "docker",
-                "build",
-                "--build-arg",
-                f"VER={ver}",
-                "-t",
-                f"117503445/demo-app:v{ver}",
-                "/workspace/app",
-            ],
-            check=True,
-        )
 
-        # docker push 117503445/demo-app:v1
-        subprocess.run(["docker", "push", f"117503445/demo-app:v{ver}"], check=True)
 
 
 def format_results(results: list[control.req.ReqResult]):
@@ -78,9 +61,41 @@ async def case_fail():
     results = await u1.stop_and_get_results()
     print(format_results(results))
 
+async def case_health():
+    def deploy_app(version: str):
+        subprocess.run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"/workspace/control/assets/health/v{version}.yaml",
+            ],
+            check=True,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+        )
+
+    u1 = control.req.ReqUser("user1")
+
+    deploy_app("1")
+    while True:
+        result = await u1.send_get_req()
+        if result.is_success and result.result.get("version") == "1":
+            break
+        logger.debug("waiting for v1 to be ready")
+        await asyncio.sleep(5)
+
+    await u1.start_send_get_req(tps=50)
+    await asyncio.sleep(10)
+    deploy_app("2")
+    await asyncio.sleep(10)
+    results = await u1.stop_and_get_results()
+    print(format_results(results))
+
 
 async def main():
-    await case_fail()
+    # await case_fail()
+    await case_health()
 
 
 if __name__ == "__main__":

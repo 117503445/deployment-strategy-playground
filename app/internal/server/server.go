@@ -1,13 +1,18 @@
 package server
 
 import (
+	"context"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+// https://gin-gonic.com/docs/examples/graceful-restart-or-stop/
+
 type Server struct {
 	version string
+	srv     *http.Server
 }
 
 func NewServer(version string) *Server {
@@ -22,5 +27,18 @@ func (s *Server) Run() {
 			"version": s.version,
 		})
 	})
-	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
+	s.srv = &http.Server{
+		Addr:    ":8080",
+		Handler: r,
+	}
+	if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err)
+	}
+}
+
+func (s *Server) Stop(ctx context.Context) {
+	if err := s.srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+	log.Println("Server Exited Properly")
 }
