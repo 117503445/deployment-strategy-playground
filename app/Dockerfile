@@ -1,5 +1,6 @@
 FROM golang:1.22 as build
 WORKDIR /workspace
+RUN go env -w GOPROXY=https://goproxy.cn,direct
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .

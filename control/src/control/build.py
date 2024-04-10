@@ -2,29 +2,50 @@ import subprocess
 from pathlib import Path
 import datetime
 
+
 def build_image():
+
+    file_build = Path("/workspace/app/build.txt")
     for ver in ["1", "2"]:
-        Path('/workspace/app/build.txt').write_text(f"Build version {ver} at {datetime.datetime.now().isoformat()}")
-        # docker build --build-arg VER=1 -t 117503445/demo-app:v1 /workspace/app
+        file_build.write_text(
+            f"Build version {ver} at {datetime.datetime.now().isoformat()}"
+        )
+        # docker exec -it dind docker build --build-arg VER=1 -t registry:5000/117503445/demo-app:v1 /workspace/app
         subprocess.run(
             [
+                "docker",
+                "exec",
+                "-it",
+                "dind",
                 "docker",
                 "build",
                 "--build-arg",
                 f"VER={ver}",
                 "-t",
-                f"117503445/demo-app:v{ver}",
+                f"registry:5000/117503445/demo-app:v{ver}",
                 "/workspace/app",
+            ]
+        )
+
+        # docker exec -it dind docker push registry:5000/117503445/demo-app:v1
+        subprocess.run(
+            [
+                "docker",
+                "exec",
+                "-it",
+                "dind",
+                "docker",
+                "push",
+                f"registry:5000/117503445/demo-app:v{ver}",
             ],
             check=True,
         )
+    file_build.unlink()
 
-        # docker push 117503445/demo-app:v1
-        subprocess.run(["docker", "push", f"117503445/demo-app:v{ver}"], check=True)
 
 def main():
     build_image()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

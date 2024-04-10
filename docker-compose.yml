@@ -18,6 +18,7 @@ services:
   k3s:
     image: "rancher/k3s:v1.29.3-k3s1"
     hostname: k3s
+    container_name: k3s
     command: server
     tmpfs:
     - /run
@@ -40,6 +41,7 @@ services:
     # This is just so that we get the kubeconfig file out
     - ./k3s/data/output:/output
     - ./k3s/config/traefik-config.yaml:/var/lib/rancher/k3s/server/manifests/traefik-config.yaml
+    - ./k3s/config/registries.yaml:/etc/rancher/k3s/registries.yaml
     # ports:
     # - 6443:6443  # Kubernetes API Server
     # - 80:80      # Ingress controller port 80
@@ -96,6 +98,24 @@ services:
       - 8081:80
     volumes:
       - ./kubepi/data:/var/lib/kubepi
+
+  registry:
+    image: registry:2
+    container_name: registry
+    volumes:
+      - ./registry/data:/var/lib/registry
+
+  dind:
+    image: docker:dind
+    container_name: dind
+    privileged: true
+    volumes:
+      - ./dind/config/daemon.json:/etc/docker/daemon.json:ro
+      - ./dind/data:/var/lib/docker
+
+      - ./:/workspace
+    # command: --insecure-registries registry:5000
+    # command: --insecure-registries registry:5000
 
 volumes:
   control-dev-vsc:
