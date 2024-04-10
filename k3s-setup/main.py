@@ -11,6 +11,8 @@ def main():
     kubeconfig = file_kubeconfig.read_text()
     kubeconfig = kubeconfig.replace('127.0.0.1', 'k3s')
 
+    Path('/workspace/k3s/data/output/kubeconfig.public.yaml').write_text(kubeconfig)
+
     Path('/root/.kube').mkdir(parents=True, exist_ok=True)
     Path('/root/.kube/config').write_text(kubeconfig)
 

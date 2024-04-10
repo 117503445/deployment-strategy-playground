@@ -17,6 +17,12 @@ func main() {
 
 	log.Printf("Starting server version: %s, HOSTNAME: %s\n", ver, os.Getenv("HOSTNAME"))
 
+	if buildText, err := os.ReadFile("build.txt"); err == nil {
+		log.Printf("Build info: %s", string(buildText))
+	}else{
+		log.Printf("Failed to read build info: %s", err)
+	}
+
 	server := server.NewServer(ver)
 	go func() {
 		server.Run()

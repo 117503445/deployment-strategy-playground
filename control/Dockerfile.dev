@@ -1,3 +1,5 @@
 FROM 117503445/dev-python
 
 RUN pacman -Sy kubectl --noconfirm
+
+RUN curl -L https://github.com/fortio/fortio/releases/download/v1.63.7/fortio-linux_amd64-1.63.7.tgz | sudo tar -C / -xvzpf -

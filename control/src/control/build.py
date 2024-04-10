@@ -1,7 +1,10 @@
 import subprocess
+from pathlib import Path
+import datetime
 
 def build_image():
     for ver in ["1", "2"]:
+        Path('/workspace/app/build.txt').write_text(f"Build version {ver} at {datetime.datetime.now().isoformat()}")
         # docker build --build-arg VER=1 -t 117503445/demo-app:v1 /workspace/app
         subprocess.run(
             [

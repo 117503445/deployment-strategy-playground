@@ -7,7 +7,7 @@ import json
 session: aiohttp.ClientSession | None = None
 
 
-async def get_session():
+async def get_session() -> aiohttp.ClientSession:
     global session
     if session is None:
         session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=1))
@@ -29,14 +29,15 @@ atexit.register(close)
 
 
 class ReqResult:
-    def __init__(self, is_success: bool, result: dict):
+    def __init__(self, is_success: bool, result: dict, reqid: int):
         self.is_success = is_success
         self.result = result
 
         self.created_at = asyncio.get_event_loop().time()
+        self.reqid = reqid
 
     def __str__(self):
-        return f"[{self.is_success}, {self.result}]"
+        return f"[{self.reqid}, {self.is_success}, {self.result}]"
 
     def __repr__(self):
         return str(self)
@@ -48,15 +49,21 @@ class ReqUser:
 
         self.requesting = False
         self.results: list[ReqResult] = []
+        self.reqid = 0
 
     async def send_get_req(self) -> ReqResult:
+        self.reqid += 1
+
+        reqid = self.reqid
         try:
-            sess = await get_session()
-            async with sess.get(f"http://k3s") as resp:
+            sess: aiohttp.ClientSession = await get_session()
+            async with sess.get(
+                f"http://k3s:80/?user={self.name}&reqid={reqid}"
+            ) as resp:
                 text = await resp.text()
                 try:
                     resp_d = json.loads(text)
-                    return ReqResult(True, resp_d)
+                    return ReqResult(True, resp_d, reqid)
                 except Exception as e:
                     return ReqResult(
                         False,
@@ -66,9 +73,10 @@ class ReqUser:
                             "text": text,
                             "status": resp.status,
                         },
+                        reqid
                     )
         except Exception as e:
-            return ReqResult(False, {"msg": "req error", "ex": str(e)})
+            return ReqResult(False, {"msg": "req error", "ex": str(e)}, reqid)
 
     async def _send_get_req(self):
         result = await self.send_get_req()
