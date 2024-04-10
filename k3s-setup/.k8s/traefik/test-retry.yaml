@@ -1,9 +1,0 @@
-# Retry 4 times with exponential backoff
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: test-retry
-spec:
-  retry:
-    attempts: 4
-    initialInterval: 1s
