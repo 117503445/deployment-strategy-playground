@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"context"
+	"flag"
 	"log"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,15 @@ import (
 )
 
 func main() {
+	sleepTime := flag.Int("sleep", 0, "sleep time in seconds")
+	flag.Parse()
+	if *sleepTime > 0 {
+		log.Printf("Sleeping for %d seconds", *sleepTime)
+		time.Sleep(time.Duration(*sleepTime) * time.Second)
+		log.Printf("Woke up after %d seconds", *sleepTime)
+		return
+	}
+
 	// read version from env
 	ver := os.Getenv("VER")
 

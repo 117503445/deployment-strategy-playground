@@ -6,17 +6,18 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 go build -o app ./cmd/server
 
-# FROM gcr.io/distroless/static-debian12 as prod
-# WORKDIR /workspace
-# COPY --from=build /workspace/app app
-# ARG VER
-# ENV VER=$VER
-# ENTRYPOINT [ "./app"]
-
-FROM debian:bookworm-slim as prod
+FROM gcr.io/distroless/static-debian12 as prod
 WORKDIR /workspace
 COPY --from=build /workspace/app app
 ARG VER
 ENV VER=$VER
 COPY ./build.txt .
 ENTRYPOINT [ "./app"]
+
+# FROM debian:bookworm-slim as prod
+# WORKDIR /workspace
+# COPY --from=build /workspace/app app
+# ARG VER
+# ENV VER=$VER
+# COPY ./build.txt .
+# ENTRYPOINT [ "./app"]
