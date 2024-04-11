@@ -9,9 +9,9 @@ from control.req import get_session
 import datetime
 
 dir_logs = Path(__file__).parent / "logs"
-if dir_logs.exists():
-    shutil.rmtree(dir_logs)
-dir_logs.mkdir()
+
+file_traefik_api = dir_logs / "traefik_api.log"
+file_meta = dir_logs / "meta.json"
 
 
 class kubeLogger:
@@ -19,6 +19,14 @@ class kubeLogger:
         self.pods_set = set()
 
         self.meta = {}
+
+        self._clear()
+
+    # clear previous logs
+    def _clear(self):
+        if dir_logs.exists():
+            shutil.rmtree(dir_logs)
+        dir_logs.mkdir()
 
     async def start_app_logs(self):
         while True:
@@ -135,22 +143,22 @@ class kubeLogger:
             )
             output = json.loads(output.stdout.decode())
             for pod in output["items"]:
-                pod_name = pod["metadata"]["name"]
-                if pod_name not in self.meta:
-                    # pod may not have IP yet
-                    if "podIP" in pod["status"]:
-                        self.meta[pod_name] = {
-                            "ip": pod["status"]["podIP"],
-                            "image": pod["spec"]["containers"][0]["image"],
-                        }
+                if "podIP" in pod["status"]:
+                    pod_name = pod["metadata"]["name"]
+                    ip = pod["status"]["podIP"]
+                    image = pod["spec"]["containers"][0]["image"]
 
-            Path(dir_logs / "meta.json").write_text(json.dumps(self.meta, indent=4))
+                    if image not in self.meta:
+                        self.meta[image] = {}
+                    self.meta[image][pod_name] = ip
+
+            Path(file_meta).write_text(json.dumps(self.meta, indent=4))
 
             await asyncio.sleep(5)
 
     async def start_traefik_api(self):
         sess = await get_session()
-        with open(dir_logs / "traefik_api.log", "w") as f:
+        with open(file_traefik_api, "w") as f:
             while True:
                 try:
                     async with sess.get(
@@ -168,3 +176,77 @@ class kubeLogger:
                     pass
 
                 await asyncio.sleep(0.1)
+
+
+class Event:
+    def __init__(self, time: datetime.datetime, message: str):
+        self.time = time
+        self.message = message
+
+
+class Analyzer:
+
+    def _parse_traefik_api(self) -> list[Event]:
+
+        events = []
+
+        lines = file_traefik_api.read_text().splitlines()
+        if not lines:
+            return []
+
+        def _parse_line(line: str) -> Event:
+            time_str, message = line.split(" ", 1)
+            time = datetime.datetime.fromisoformat(time_str)
+            return Event(time, f"Traefik LoadBalancer change to: {message}")
+
+        events.append(_parse_line(lines[0]))
+        lines = lines[1:]
+        for line in lines:
+            if _parse_line(line).message != events[-1].message:
+                events.append(_parse_line(line))
+
+        return events
+
+    def execute(self):
+
+        logger.debug("=== log analyze start ===")
+
+        meta = file_meta.read_text()
+        print(meta)
+
+        class PodsMeta:
+            def __init__(self, pod_name: str, ip: str, image: str):
+                self.pod_name = pod_name
+                self.ip = ip
+                self.image = image
+
+            def __repr__(self):
+                return self.__str__()
+
+            def __str__(self):
+                return f"PodsMeta({self.pod_name}, {self.ip}, {self.image})"
+
+        pods_meta: list[PodsMeta] = []
+        for image in json.loads(meta):
+            for pod_name, ip in json.loads(meta)[image].items():
+                pods_meta.append(PodsMeta(pod_name, ip, image))
+
+        events: list[Event] = []
+
+        events.extend(self._parse_traefik_api())
+
+        events.sort(key=lambda x: x.time)
+
+        for event in events:
+            print(f"{event.time} {event.message}")
+
+        logger.debug("=== log analyze end ===")
+
+
+def main():
+    analyzer = Analyzer()
+    analyzer.execute()
+
+
+if __name__ == "__main__":
+    main()

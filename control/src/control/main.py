@@ -92,6 +92,7 @@ async def case_fail():
 
 
 async def case_health():
+    logger.info("=== request start ===")
     def deploy_app(version: str):
         logger.info(f"deploying v{version}")
         subprocess.run(
@@ -141,18 +142,22 @@ async def case_health():
     await u1.start_send_get_req(tps=50)
     await asyncio.sleep(10)
     deploy_app("2")
-    await asyncio.sleep(40)
+    await asyncio.sleep(20)
     results = await u1.stop_and_get_results()
     logger.info(f"results = {format_results(results)}")
     logger.info(
         f"failed reqids = {sorted([r.reqid for r in results if not r.is_success])}"
     )
     delete_app("2")
+    logger.info("=== request end ===")
 
 
 async def main():
     # await case_fail()
     await case_health()
+
+    analyzer = control.log.Analyzer()
+    analyzer.execute()
 
 
 if __name__ == "__main__":
