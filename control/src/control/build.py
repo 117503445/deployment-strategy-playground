@@ -4,7 +4,6 @@ import datetime
 
 
 def build_image():
-
     file_build = Path("/workspace/app/build.txt")
     for ver in ["1", "2"]:
         file_build.write_text(

@@ -73,7 +73,7 @@ class ReqUser:
                             "text": text,
                             "status": resp.status,
                         },
-                        reqid
+                        reqid,
                     )
         except Exception as e:
             return ReqResult(False, {"msg": "req error", "ex": str(e)}, reqid)

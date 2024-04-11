@@ -6,6 +6,7 @@ from pathlib import Path
 import control.log
 import json
 
+
 def stderr_filter_function(record):
     if record["name"] == "control.req" and record["level"].name == "DEBUG":
         return False
@@ -143,7 +144,9 @@ async def case_health():
     await asyncio.sleep(40)
     results = await u1.stop_and_get_results()
     logger.info(f"results = {format_results(results)}")
-    logger.info(f"failed reqids = {sorted([r.reqid for r in results if not r.is_success])}")
+    logger.info(
+        f"failed reqids = {sorted([r.reqid for r in results if not r.is_success])}"
+    )
     delete_app("2")
 
 
