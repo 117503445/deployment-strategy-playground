@@ -175,7 +175,8 @@ class kubeLogger:
                 except Exception as e:
                     pass
 
-                await asyncio.sleep(0.1)
+                # refresh as fast as possible
+                # await asyncio.sleep(0.1)
 
 
 class Event:
@@ -207,6 +208,49 @@ class Analyzer:
 
         return events
 
+    def _parse_pod_logs(self) -> list[Event]:
+
+        events = []
+
+        for pod_log in dir_logs.glob("v*_*.log"):
+            pod_name = pod_log.stem[3:]  # 3: to remove "v1_" or "v2_"
+            lines = pod_log.read_text().splitlines()
+            if not lines:
+                continue
+
+            def _is_access_log(line: str):
+                return "GET" in line and "debug" not in line
+
+            def _is_user_access_log(line: str):
+                return _is_access_log(line) and "user" in line
+
+            def _parse_access_log(line: str):
+                start_index = line.index("[GIN] ") + len("[GIN] ")
+
+                end_index = start_index + len("2024-04-11 14:08:06.230143")
+                time_str = line[start_index:end_index]
+                time = datetime.datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S.%f")
+                return time
+
+            for line in lines:
+                if _is_access_log(line):
+                    time = _parse_access_log(line)
+                    events.append(Event(time, f"{pod_name} First Request"))
+                    break
+            for line in lines:
+                if _is_user_access_log(line):
+                    time = _parse_access_log(line)
+                    events.append(Event(time, f"{pod_name} First User Request"))
+                    break
+
+            for line in reversed(lines):
+                if _is_access_log(line):
+                    time = _parse_access_log(line)
+                    events.append(Event(time, f"{pod_name} Last User Request"))
+                    break
+
+        return events
+
     def execute(self):
 
         logger.debug("=== log analyze start ===")
@@ -234,6 +278,7 @@ class Analyzer:
         events: list[Event] = []
 
         events.extend(self._parse_traefik_api())
+        events.extend(self._parse_pod_logs())
 
         events.sort(key=lambda x: x.time)
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,21 @@ func NewServer(version string) *Server {
 }
 
 func (s *Server) Run() {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		// your custom format
+		return fmt.Sprintf("[GIN] %s \"%s %s %s %d %s %s\"\n",
+			param.TimeStamp.Format("2006-01-02 15:04:05.000000"),
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.StatusCode,
+			param.Latency,
+			param.ErrorMessage,
+		)
+	}))
+	r.Use(gin.Recovery())
+
 	r.GET("/", func(c *gin.Context) {
 		time.Sleep(500 * time.Millisecond)
 		c.JSON(http.StatusOK, gin.H{
