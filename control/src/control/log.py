@@ -59,34 +59,60 @@ class kubeLogger:
             stderr=subprocess.DEVNULL,
         )
         # wait for traefik pod to be ready
-        await asyncio.sleep(10)
 
-        pod_name = subprocess.run(
-            [
-                "kubectl",
-                "get",
-                "pod",
-                "-l",
-                "app.kubernetes.io/name=traefik",
-                "--namespace",
-                "kube-system",
-                "-o",
-                "jsonpath={.items[0].metadata.name}",
-            ],
-            check=True,
-            stdout=subprocess.PIPE,
-        ).stdout.decode()
+        while True:
+            try:
+                logger.debug("waiting for traefik pod to be ready")
+                pod_name = subprocess.run(
+                    [
+                        "kubectl",
+                        "get",
+                        "pod",
+                        "-l",
+                        "app.kubernetes.io/name=traefik",
+                        "--namespace",
+                        "kube-system",
+                        "-o",
+                        "jsonpath={.items[0].metadata.name}",
+                    ],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                ).stdout.decode()
+                break
+            except Exception as e:
+                await asyncio.sleep(3)
         logger.debug(f"traefik pod name = {pod_name}")
 
         file_log = dir_logs / f"traefik_stdout.log"
         asyncio.create_task(self._collect_pod_name(pod_name, file_log, "kube-system"))
 
+    async def _wait_for_pod_ready(self, pod_name: str, namespace: str = "default"):
+        while True:
+            out = await asyncio.create_subprocess_exec(
+                "kubectl",
+                "get",
+                "pod",
+                pod_name,
+                "-n",
+                namespace,
+                "-o",
+                "json",
+                stdout=subprocess.PIPE,
+            )
+            out = await out.communicate()
+            try:
+                out = json.loads(out[0].decode())
+                if out["status"]["phase"] == "Running":
+                    break
+            except Exception as e:
+                pass
+
+            await asyncio.sleep(1)
+
     async def _collect_pod_name(
         self, pod_name: str, file_log: Path, namespace: str = "default"
     ):
-        # wait for pod to be ready
-        # TODO: use kubectl to check if pod is ready
-        await asyncio.sleep(3)
+        await self._wait_for_pod_ready(pod_name, namespace)
 
         logger.info(f"collecting logs for {pod_name} to {file_log}")
 
