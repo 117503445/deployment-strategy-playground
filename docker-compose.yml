@@ -60,9 +60,10 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - './:/workspace'
+      - './control/entrypoint:/entrypoint'
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - control-dev-vsc:/root/.vscode-server
-      - control-dev-rye:/root/rye
+      - control-dev-rye:/root/.rye
 
     stdin_open: true
     tty: true
@@ -80,6 +81,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - './:/workspace'
+      - './k3s-setup/entrypoint:/entrypoint'
       - k3s-setup-dev-vsc:/root/.vscode-server
     stdin_open: true
     tty: true
