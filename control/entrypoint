@@ -2,7 +2,7 @@
 
 import subprocess
 
-subprocess.run(["rye", "sync"], cwd="/workspace/control")
+subprocess.run(["rye", "sync", "--verbose"], cwd="/workspace/control")
 
 # rye run python ./src/control/build.py
 subprocess.run(["rye", "run", "python", "./src/control/build.py"], cwd="/workspace/control")
